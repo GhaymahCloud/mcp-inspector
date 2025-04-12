@@ -12,4 +12,4 @@ USER node
 EXPOSE 6274
 
 # Run the inspector with explicit host binding
-CMD ["npx", "@modelcontextprotocol/inspector", "--host", "0.0.0.0"]
+CMD ["npx", "@modelcontextprotocol/inspector"]
