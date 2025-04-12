@@ -13,8 +13,6 @@ RUN npm ci
 # Copy the entire application to the container
 COPY . .
 
-# Build client and server
-RUN npm run build-server && npm run build-client
 
 # Expose the necessary ports (Client, Server)
 EXPOSE 3000 5000
