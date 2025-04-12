@@ -1,32 +1,25 @@
-# Use Node.js 18 base image
-FROM node:18-alpine
+# Stage 1: Build
+FROM node:20-alpine as builder
 
-# Set working directory
 WORKDIR /app
-
-# Copy package files
 COPY package.json package-lock.json ./
-COPY server/package.json ./server/
-COPY tsconfig.json ./
+COPY client/package.json client/package-lock.json ./client/
+COPY server/package.json server/package-lock.json ./server/
+RUN npm install
 
-# Install dependencies
-RUN npm ci
-
-# Copy application files
 COPY . .
-
-# Build the application
 RUN npm run build
 
-# Install PM2 globally
-RUN npm install -g pm2
+# Stage 2: Runtime
+FROM node:20-alpine
 
-# Set environment variables
-ENV NODE_ENV production
-ENV PORT 3000
+WORKDIR /app
+COPY --from=builder /app/package.json /app/package-lock.json ./
+COPY --from=builder /app/bin ./bin
+COPY --from=builder /app/client/dist ./client/dist
+COPY --from=builder /app/server/build ./server/build
 
-# Expose necessary ports
-EXPOSE ${PORT}
+RUN npm install --production
 
-# Command to run both services using PM2
-CMD ["pm2", "start", "npm", "--", "run", "start-server", "&&", "npm", "run", "start-client"]
+EXPOSE 3000
+CMD ["npm", "start"]
