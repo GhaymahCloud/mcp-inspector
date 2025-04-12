@@ -1,35 +1,25 @@
 # Stage 1: Builder
-FROM node:20-alpine AS builder
-
-WORKDIR /app
-
-# 1. Copy root package files
-COPY package.json package-lock.json .npmrc ./
-
-# 2. Copy workspace package files
-COPY client/package.json ./client/
-COPY server/package.json ./server/
-
-# 3. Install all dependencies (root + workspaces)
-RUN npm install --workspaces --include-workspace-root
-
-# 4. Copy all source files
-COPY . .
-
-# 5. Build both client and server
-RUN npm run build
-
-# Stage 2: Runtime
 FROM node:20-alpine
 
+# Set the working directory inside the container
 WORKDIR /app
 
-# Copy production files
-COPY --from=builder /app/package.json /app/package-lock.json ./
-COPY --from=builder /app/bin ./bin
-COPY --from=builder /app/client/dist ./client/dist
-COPY --from=builder /app/server/build ./server/build
-COPY --from=builder /app/node_modules ./node_modules
+# Copy the root package.json and package-lock.json files
+COPY package.json package-lock.json ./
 
-EXPOSE 3000
-CMD ["node", "./bin/cli.js"]
+# Install project-level dependencies
+RUN npm ci
+
+# Copy the entire application to the container
+COPY . .
+
+# Build client and server
+RUN npm run build-server && npm run build-client
+
+# Expose the necessary ports (Client, Server)
+EXPOSE 3000 5000
+
+# Start the application
+CMD ["npm", "run", "dev"]
+
+
