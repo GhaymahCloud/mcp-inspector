@@ -1,23 +1,15 @@
-# Stage 1: Builder
-FROM node:20-alpine
+# Use official Node.js LTS image
+FROM node:lts
 
-# Set the working directory inside the container
+# Set working directory
 WORKDIR /app
 
-# Copy the root package.json and package-lock.json files
-COPY package.json package-lock.json ./
+# Switch to non-root user for security
+RUN chown -R node:node /app
+USER node
 
-# Install project-level dependencies
-RUN npm ci
+# Expose the inspector UI port
+EXPOSE 6274
 
-# Copy the entire application to the container
-COPY . .
-
-
-# Expose the necessary ports (Client, Server)
-EXPOSE 3000 5000
-
-# Start the application
-CMD ["npm", "run", "dev"]
-
-
+# Run the inspector with explicit host binding
+CMD ["npx", "@modelcontextprotocol/inspector", "--host", "0.0.0.0"]
