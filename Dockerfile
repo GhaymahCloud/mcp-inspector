@@ -2,24 +2,34 @@
 FROM node:20-alpine as builder
 
 WORKDIR /app
-COPY package.json package-lock.json ./
-COPY client/package.json client/package-lock.json ./client/
-COPY server/package.json server/package-lock.json ./server/
+
+# 1. Copy root files
+COPY package.json package-lock.json .npmrc ./
+
+# 2. Copy client files (ignore missing lock files)
+COPY client/package.json ./client/
+COPY server/package.json ./server/
+
+# 3. Install root dependencies
 RUN npm install
 
+# 4. Copy all other files
 COPY . .
+
+# 5. Build both client and server
 RUN npm run build
 
 # Stage 2: Runtime
 FROM node:20-alpine
 
 WORKDIR /app
+
+# Copy production files
 COPY --from=builder /app/package.json /app/package-lock.json ./
 COPY --from=builder /app/bin ./bin
 COPY --from=builder /app/client/dist ./client/dist
 COPY --from=builder /app/server/build ./server/build
-
-RUN npm install --production
+COPY --from=builder /app/node_modules ./node_modules
 
 EXPOSE 3000
-CMD ["npm", "start"]
+CMD ["node", "./bin/cli.js"]
