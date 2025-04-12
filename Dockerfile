@@ -1,19 +1,19 @@
-# Stage 1: Build
-FROM node:20-alpine as builder
+# Stage 1: Builder
+FROM node:20-alpine AS builder
 
 WORKDIR /app
 
-# 1. Copy root files
+# 1. Copy root package files
 COPY package.json package-lock.json .npmrc ./
 
-# 2. Copy client files (ignore missing lock files)
+# 2. Copy workspace package files
 COPY client/package.json ./client/
 COPY server/package.json ./server/
 
-# 3. Install root dependencies
-RUN npm install
+# 3. Install all dependencies (root + workspaces)
+RUN npm install --workspaces --include-workspace-root
 
-# 4. Copy all other files
+# 4. Copy all source files
 COPY . .
 
 # 5. Build both client and server
